@@ -51,3 +51,4 @@ Here is a summary of some of the methods i included in my clean_images.py:
 - https://machinelearningmastery.com/deep-learning-for-computer-vision/
 - https://machinelearningmastery.com/best-practices-for-preparing-and-augmenting-image-data-for-convolutional-neural-networks/
 - https://towardsdatascience.com/massive-tutorial-on-image-processing-and-preparation-for-deep-learning-in-python-1-e534ee42f122
+- https://blog.roboflow.com/you-might-be-resizing-your-images-incorrectly/

@@ -36,7 +36,7 @@ class ImageClense:
         pass
 
     @staticmethod
-    def resize_image_to_square(image: Image, length: int) -> Image:
+    def crop_image_to_square(image: Image, length: int) -> Image:
         """
         Resize an image to a square. Can make an image bigger to make it fit
         or smaller if it doesn't fit. It also crops part of the image.
@@ -80,14 +80,30 @@ class ImageClense:
             # We now have a length*length pixels image.
             return resized_image
 
-    def get_images(self, directory):
+    @staticmethod
+    def resize_image_and_pad(img: Image, length, pad_mode='RGB'):
+        if pad_mode != 'RGB':
+            pad_mode = 'L'
+        padding = Image.new(mode=pad_mode, size=(length, length))
+        img_size = img.size
+        max_dim = max(img_size)
+        ratio = length / max_dim
+        new_img_size = (int(img_size[0] * ratio), int(img_size[1] * ratio))
+        resized_img = img.resize(new_img_size)
+        padding.paste(resized_img, ((length - new_img_size[0]) // 2, (new_img_size[1]) // 2,))
+        return resized_img
+
+    def get_images(self, directory, pad_mode, crop=False):
         """
         """
         img_list = []
         file_names = []
         for file in self.download:
             img = Image.open(os.path.join(directory, file))
-            img = self.resize_image_to_square(img, 256)
+            if crop == True:
+                img = self.crop_image_to_square(img, 256)
+            else:
+                img = self.resize_image_and_pad(img, 256, pad_mode)
             img_list.append(img)
             file_names.append(file)
         return img_list, file_names
@@ -265,7 +281,7 @@ if __name__ == "__main__":
     download_image_directory = os.path.join(os.getcwd(),'images_fb/test_images/')
     upload_image_directory = os.path.join(os.getcwd(),'images_fb/cleaned_test_images/')
     cleanse = ImageClense(download_image_directory, upload_image_directory)
-    resized_images, image_names = cleanse.get_images(download_image_directory)
+    resized_images, image_names = cleanse.get_images(download_image_directory, 'RGB')
     img_number = 0
     for img in resized_images:
         file = image_names[img_number]
@@ -281,11 +297,6 @@ if __name__ == "__main__":
         dilated_binary = cleanse.dilate(1, binary_reversed)
         erode_dilate = cleanse.erode_dilate(binary_reversed, 10, 2, False)
         eroded_dilated_extract = Image.composite(greyscale, blank, erode_dilate)
-
-
-
-
-        # https://coderzcolumn.com/tutorials/python/image-filtering-in-python-using-pillow
         contour = img.filter(ImageFilter.CONTOUR)
         grey_contour = greyscale.filter(ImageFilter.CONTOUR)
         gaussian_blur = img.filter(ImageFilter.GaussianBlur)
@@ -296,14 +307,12 @@ if __name__ == "__main__":
         find_edges_grey = greyscale.filter(ImageFilter.FIND_EDGES)
         sharpened = img.filter(ImageFilter.SHARPEN)
         smoothed = img.filter(ImageFilter.SMOOTH)
-
         combined  = cleanse.image_to_greyscale(sharpened)
         combined = combined.filter(ImageFilter.SMOOTH)
         combined_threshold = cleanse.manual_global_threshold(combined, False)
         # combined_edges = combined_threshold.filter(ImageFilter.FIND_EDGES)
         combined_final = cleanse.erode_dilate(combined_threshold, 10, 2, False)
         combined_final = Image.composite(greyscale, blank, combined_final)
-
         cleanse.save_images(cleanse.upload, 'original', img, file)
         cleanse.save_images(cleanse.upload, 'greyscale', greyscale, file)
         cleanse.save_images(cleanse.upload, 'binary', binary, file)
