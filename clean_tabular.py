@@ -153,6 +153,8 @@ class TabularCleanse:
         data['geocode'] = data[field_to_geocode].apply(geocode)
         data['long_lat'] = data['geocode'].apply(
             lambda loc: tuple(loc.point) if loc else None)
+        data[['long', 'lat', 'remove']] = pd.DataFrame(data['long_lat'].tolist(), index=data.index)
+        data.drop(['remove','geocode','long_lat', field_to_geocode], axis=1, inplace=True)
         return data
     
     @staticmethod
@@ -175,20 +177,23 @@ if __name__ == "__main__":
     cleaning_products = cleanse.remove_rows_conditonal(cleaning_products, 'price_gbp', 399000.00, '<')
     cleaning_products = cleanse.dynamic_split_df_value(cleaning_products, 'category', '/', True, 'sub_cat_')
     cleaning_products = cleanse.manual_split_df_value(cleaning_products, 'product_name', 'product_name', '|', 1)
-    cleaning_products.dropna(axis='rows', subset='city')
-    cleaning_products.sort_values(by='city',ascending=False)
     cleaning_products = cleaning_products.dropna(subset=['city'])
     geocode_start= time.perf_counter()
     print(f'Starting to geocode at {geocode_start}')
     cleaning_products = cleanse.geocode_locations(cleaning_products, 'location')
     geocode_end= time.perf_counter()
     print(f'Finished to geocode at {geocode_end}')
-    cleaning_products.drop(['price','location', 'create_time', 'category', 'sub_cat_1','sub_cat_2', 'sub_cat_3', 'sub_cat_4', 'page_id'], axis=1, inplace=True)
+    geocode_local_area = cleaning_products[cleaning_products.long.isnull()]
+    geocode_local_area = cleanse.geocode_locations(geocode_local_area, 'local_area')
+    print(cleaning_products.info())
+    cleaning_products.drop(['local_area'], axis=1, inplace=True)
+    print(cleaning_products.info())
+    cleaning_products = pd.concat([cleaning_products, geocode_local_area], ignore_index=True)
+    cleaning_products.drop(['product_name', 'product_description', 'price', 'create_time', 'category', 'sub_cat_1','sub_cat_2', 'sub_cat_3', 'sub_cat_4', 'page_id', 'city'], axis=1, inplace=True)
     # cleaning_products.info()
     # Encoding
-    sub_cat_0_one = pd.get_dummies(cleaning_products['sub_cat_0'], drop_first=True, prefix='sub_cat')
-    # cleaning_products = cleanse.multiple_dummy_encoder(cleaning_products, ['sub_cat_0', 'city'], [None, None])
+    # sub_cat_0_one = pd.get_dummies(cleaning_products['sub_cat_0'], drop_first=True, prefix='sub_cat')
+    cleaning_products = cleanse.multiple_dummy_encoder(cleaning_products, ['sub_cat_0'], [None])
     cleaning_products.info()
     # Think about changing datatype to catgeories
-
-    cleaning_products.to_pickle('cleaned_products.pkl')
+    cleaning_products.to_pickle('final_cleaned_products.pkl')
