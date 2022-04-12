@@ -154,7 +154,7 @@ class TabularCleanse:
         data['long_lat'] = data['geocode'].apply(
             lambda loc: tuple(loc.point) if loc else None)
         data[['long', 'lat', 'remove']] = pd.DataFrame(data['long_lat'].tolist(), index=data.index)
-        data.drop(['remove','geocode','long_lat', field_to_geocode], axis=1, inplace=True)
+        data.drop(['remove','geocode','long_lat'], axis=1, inplace=True)
         return data
     
     @staticmethod
@@ -186,14 +186,12 @@ if __name__ == "__main__":
     geocode_local_area = cleaning_products[cleaning_products.long.isnull()]
     geocode_local_area = cleanse.geocode_locations(geocode_local_area, 'local_area')
     print(cleaning_products.info())
-    cleaning_products.drop(['local_area'], axis=1, inplace=True)
-    print(cleaning_products.info())
     cleaning_products = pd.concat([cleaning_products, geocode_local_area], ignore_index=True)
-    cleaning_products.drop(['product_name', 'product_description', 'price', 'create_time', 'category', 'sub_cat_1','sub_cat_2', 'sub_cat_3', 'sub_cat_4', 'page_id', 'city'], axis=1, inplace=True)
+    cleaning_products.drop(['product_name', 'product_description', 'price', 'create_time', 'category', 'local_area','sub_cat_2', 'sub_cat_3', 'sub_cat_4', 'page_id', 'city'], axis=1, inplace=True)
     # cleaning_products.info()
     # Encoding
     # sub_cat_0_one = pd.get_dummies(cleaning_products['sub_cat_0'], drop_first=True, prefix='sub_cat')
-    cleaning_products = cleanse.multiple_dummy_encoder(cleaning_products, ['sub_cat_0'], [None])
+    cleaning_products = cleanse.multiple_dummy_encoder(cleaning_products, ['sub_cat_0', 'sub_cat_1'], ['cat_0_', 'cat_1_'])
     cleaning_products.info()
     # Think about changing datatype to catgeories
     cleaning_products.to_pickle('final_cleaned_products.pkl')
