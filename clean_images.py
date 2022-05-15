@@ -18,6 +18,7 @@ from skimage.restoration import denoise_tv_chambolle
 from skimage.feature import corner_harris
 from skimage.feature import corner_peaks
 from PIL import ImageFilter
+from tqdm import tqdm
 
 
 class ImageClense:
@@ -83,15 +84,15 @@ class ImageClense:
     @staticmethod
     def resize_image_and_pad(img: Image, length, pad_mode='RGB'):
         if pad_mode != 'RGB':
-            pad_mode = 'L'
+            pad_mode = 'RGB'
         padding = Image.new(mode=pad_mode, size=(length, length))
         img_size = img.size
-        max_dim = max(img_size)
+        max_dim = max(img.size)
         ratio = length / max_dim
         new_img_size = (int(img_size[0] * ratio), int(img_size[1] * ratio))
         resized_img = img.resize(new_img_size)
-        padding.paste(resized_img, ((length - new_img_size[0]) // 2, (new_img_size[1]) // 2,))
-        return resized_img
+        padding.paste(resized_img, ((length - new_img_size[0]) // 2, (length - new_img_size[1]) // 2))
+        return padding
 
     def get_images(self, directory, pad_mode, crop=False):
         """
@@ -99,11 +100,12 @@ class ImageClense:
         img_list = []
         file_names = []
         for file in self.download:
+            print("start")
             img = Image.open(os.path.join(directory, file))
             if crop == True:
-                img = self.crop_image_to_square(img, 256)
+                img = self.crop_image_to_square(img, 64)
             else:
-                img = self.resize_image_and_pad(img, 256, pad_mode)
+                img = self.resize_image_and_pad(img, 64, pad_mode)
             img_list.append(img)
             file_names.append(file)
         return img_list, file_names
@@ -288,9 +290,8 @@ if __name__ == "__main__":
     cleanse = ImageClense(download_image_directory, upload_image_directory)
     resized_images, image_names = cleanse.get_images(download_image_directory, 'RGB')
     img_number = 0
-    for img in resized_images:
+    for img in tqdm(resized_images, desc='Cleaning images...'):
         file = image_names[img_number]
-        print(file)
         # original_array = cleanse.image_to_array(img)
         # greyscale = cleanse.image_to_greyscale(img)
         # binary = cleanse.manual_global_threshold(greyscale)
