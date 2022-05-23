@@ -99,13 +99,12 @@ class ImageClense:
         """
         img_list = []
         file_names = []
-        for file in self.download:
-            print("start")
+        for file in tqdm(self.download, desc='Opening image files...'):
             img = Image.open(os.path.join(directory, file))
             if crop == True:
-                img = self.crop_image_to_square(img, 64)
+                img = self.crop_image_to_square(img, 128)
             else:
-                img = self.resize_image_and_pad(img, 64, pad_mode)
+                img = self.resize_image_and_pad(img, 128, pad_mode)
             img_list.append(img)
             file_names.append(file)
         return img_list, file_names
@@ -285,6 +284,7 @@ class ImageClense:
     # Change brightness randomly
 
 if __name__ == "__main__":
+    print(os.getcwd())
     download_image_directory = os.path.join(os.getcwd(),'images_fb/images/')
     upload_image_directory = os.path.join(os.getcwd(),'images_fb/clean_images/')
     cleanse = ImageClense(download_image_directory, upload_image_directory)
@@ -320,7 +320,7 @@ if __name__ == "__main__":
         # # combined_edges = combined_threshold.filter(ImageFilter.FIND_EDGES)
         # combined_final = cleanse.erode_dilate(combined_threshold, 10, 2, False)
         # combined_final = Image.composite(greyscale, blank, combined_final)
-        cleanse.save_images(cleanse.upload, 'original', img, file)
+        cleanse.save_images(cleanse.upload, 'original_128', img, file)
         # cleanse.save_images(cleanse.upload, 'greyscale', greyscale, file)
         # cleanse.save_images(cleanse.upload, 'binary', binary, file)
         # cleanse.save_images(cleanse.upload, 'binary_reversed', binary_reversed, file)
