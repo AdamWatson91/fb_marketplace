@@ -158,10 +158,10 @@ class TabularCleanse:
         return data
     
     @staticmethod
-    def multiple_dummy_encoder(data, field_list, prefix_list):
+    def multiple_dummy_encoder(data, field_list, prefix_list, drop_first=True):
         field_count = 0
         for field in field_list:
-            encoded_df = pd.get_dummies(data[field], drop_first=True, prefix=prefix_list[field_count])
+            encoded_df = pd.get_dummies(data[field], drop_first=drop_first, prefix=prefix_list[field_count])
             data.drop([field_list[field_count]], axis=1, inplace=True)
             data = pd.concat([data, encoded_df], axis=1)
             field_count += 1

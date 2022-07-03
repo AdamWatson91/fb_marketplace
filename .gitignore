@@ -127,3 +127,11 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# ignore project directories
+images_fb/
+
+# ignore project files
+/cleansed_product_images*
+/fb_marketplace_conn.json
+/cleansed_img_tabular

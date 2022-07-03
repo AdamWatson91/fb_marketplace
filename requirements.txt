@@ -12,3 +12,4 @@ skimage==0.0
 SQLAlchemy==1.4.32
 tqdm==4.63.0
 webcolors==1.11.1
+torch

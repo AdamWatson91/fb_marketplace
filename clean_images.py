@@ -2,6 +2,7 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+import random
 from PIL import Image
 from numpy import array, float32
 from numpy import asarray
@@ -21,7 +22,7 @@ from PIL import ImageFilter
 from tqdm import tqdm
 
 
-class ImageClense:
+class ImageCleanse:
     """
     This class provides key functionality to extract and manipulate image data.
     It has been created with the primarily use case of image classification.
@@ -94,7 +95,7 @@ class ImageClense:
         padding.paste(resized_img, ((length - new_img_size[0]) // 2, (length - new_img_size[1]) // 2))
         return padding
 
-    def get_images(self, directory, pad_mode, crop=False):
+    def get_images(self, directory, img_size, pad_mode, crop=False):
         """
         """
         img_list = []
@@ -102,9 +103,9 @@ class ImageClense:
         for file in tqdm(self.download, desc='Opening image files...'):
             img = Image.open(os.path.join(directory, file))
             if crop == True:
-                img = self.crop_image_to_square(img, 128)
+                img = self.crop_image_to_square(img, img_size)
             else:
-                img = self.resize_image_and_pad(img, 128, pad_mode)
+                img = self.resize_image_and_pad(img, img_size, pad_mode)
             img_list.append(img)
             file_names.append(file)
         return img_list, file_names
@@ -228,14 +229,6 @@ class ImageClense:
         plt.plot(corner_coords[:, 1], corner_coords[:, 0], "+b", markersize=15)
         plt.axis("off")
     
-    def centreing(self, pixels, global_centre=True, noramlised=True):
-        # Consider a function that allows user to pick whther to centre pre or post normalisation with normalised yes/no
-        # Centre prior to normalisation 
-        # global_centered = pixels
-        # global_centered = global_centered - pixel_mean
-        # global_centered = global_centered.mean()
-        pass
-    
     @staticmethod
     def save_images(path, folder, img, file_name):
         full_path = os.path.join(path, folder)
@@ -277,69 +270,14 @@ class ImageClense:
                 img = self.dilate(dilate_cycles, img)
             else:
                 img = self.erode(erode_cycles, img)
-        return img    
+        return img
 
-    # Consider functions for perform Data Augementation
-    # Rotate, at an angle and Horizontal
-    # Change brightness randomly
-
-if __name__ == "__main__":
-    print(os.getcwd())
-    download_image_directory = os.path.join(os.getcwd(),'images_fb/images/')
-    upload_image_directory = os.path.join(os.getcwd(),'images_fb/clean_images/')
-    cleanse = ImageClense(download_image_directory, upload_image_directory)
-    resized_images, image_names = cleanse.get_images(download_image_directory, 'RGB')
-    img_number = 0
-    for img in tqdm(resized_images, desc='Cleaning images...'):
-        file = image_names[img_number]
-        # original_array = cleanse.image_to_array(img)
-        # greyscale = cleanse.image_to_greyscale(img)
-        # binary = cleanse.manual_global_threshold(greyscale)
-        # binary_reversed = cleanse.manual_global_threshold(greyscale, False)
-        # local_threshold = cleanse.manaual_local_threshold(greyscale, 5, 2)
-        # edge_detection = cleanse.edge_detection(greyscale)
-        # eroded_binary = cleanse.erode(1, binary_reversed)
-        # blank = img.point(lambda _: 0)
-        # eroded_extract = Image.composite(greyscale, blank, eroded_binary)
-        # dilated_binary = cleanse.dilate(1, binary_reversed)
-        # erode_dilate = cleanse.erode_dilate(binary_reversed, 10, 2, False)
-        # eroded_dilated_extract = Image.composite(greyscale, blank, erode_dilate)
-        # contour = img.filter(ImageFilter.CONTOUR)
-        # grey_contour = greyscale.filter(ImageFilter.CONTOUR)
-        # gaussian_blur = img.filter(ImageFilter.GaussianBlur)
-        # detailed = img.filter(ImageFilter.DETAIL)
-        # edge_enhance = img.filter(ImageFilter.EDGE_ENHANCE)
-        # embossed = img.filter(ImageFilter.EMBOSS)
-        # find_edges = img.filter(ImageFilter.FIND_EDGES)
-        # find_edges_grey = greyscale.filter(ImageFilter.FIND_EDGES)
-        # sharpened = img.filter(ImageFilter.SHARPEN)
-        # smoothed = img.filter(ImageFilter.SMOOTH)
-        # combined  = cleanse.image_to_greyscale(sharpened)
-        # combined = combined.filter(ImageFilter.SMOOTH)
-        # combined_threshold = cleanse.manual_global_threshold(combined, False)
-        # # combined_edges = combined_threshold.filter(ImageFilter.FIND_EDGES)
-        # combined_final = cleanse.erode_dilate(combined_threshold, 10, 2, False)
-        # combined_final = Image.composite(greyscale, blank, combined_final)
-        cleanse.save_images(cleanse.upload, 'original_128', img, file)
-        # cleanse.save_images(cleanse.upload, 'greyscale', greyscale, file)
-        # cleanse.save_images(cleanse.upload, 'binary', binary, file)
-        # cleanse.save_images(cleanse.upload, 'binary_reversed', binary_reversed, file)
-        # cleanse.save_images(cleanse.upload, 'local_threshold', local_threshold, file)
-        # cleanse.save_images(cleanse.upload, 'edge_detection', edge_detection, file)
-        # cleanse.save_images(cleanse.upload, 'contour', contour, file)
-        # cleanse.save_images(cleanse.upload, 'grey_contour', grey_contour, file)
-        # cleanse.save_images(cleanse.upload, 'gaussian_blur', gaussian_blur, file)
-        # cleanse.save_images(cleanse.upload, 'detailed', detailed, file)
-        # cleanse.save_images(cleanse.upload, 'edge_enhance', edge_enhance, file)
-        # cleanse.save_images(cleanse.upload, 'embossed', embossed, file)
-        # cleanse.save_images(cleanse.upload, 'find_edges', find_edges, file)
-        # cleanse.save_images(cleanse.upload, 'find_edges_grey', find_edges_grey, file)
-        # cleanse.save_images(cleanse.upload, 'sharpened', sharpened, file)
-        # cleanse.save_images(cleanse.upload, 'smoothed', smoothed, file)
-        # cleanse.save_images(cleanse.upload, 'eroded_binary', eroded_binary, file)
-        # cleanse.save_images(cleanse.upload, 'dilated_binary', dilated_binary, file)
-        # cleanse.save_images(cleanse.upload, 'eroded_extract', eroded_extract, file)
-        # cleanse.save_images(cleanse.upload, 'combined', combined_threshold, 'thres_'+file)
-        # # cleanse.save_images(cleanse.upload, 'combined', combined_edges, 'edge_'+file)
-        # cleanse.save_images(cleanse.upload, 'combined', combined_final, 'final_'+file)
-        img_number += 1
+    @staticmethod
+    def create_holdout(img_list, hold_out_size):
+        list_size = len(img_list)
+        random.shuffle(img_list)
+        holdout_split = list_size - round(list_size*hold_out_size)
+        print(holdout_split)
+        holdout = img_list[holdout_split:]
+        data = img_list[:holdout_split]
+        return holdout, data
