@@ -135,3 +135,11 @@ images_fb/
 /cleansed_product_images*
 /fb_marketplace_conn.json
 /cleansed_img_tabular
+/bert_decoder.pkl
+/bert_decoder.pkl:Zone.Identifier
+/bert_model.pt
+/bert_model.pt:Zone.Identifier
+/image_decoder.pkl
+/image_decoder.pkl:Zone.Identifier
+/image_model.pt
+/image_model.pt:Zone.Identifier
