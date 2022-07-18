@@ -63,7 +63,6 @@ class BertCNN(torch.nn.Module):
             nn.MaxPool1d(kernel_size=2, stride=2),
             nn.Conv1d(64, 32, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
-            # nn.Dropout(),
             nn.Flatten(),
             nn.Linear(1152 , 128),
             nn.ReLU(),
@@ -89,15 +88,38 @@ class BertCNN(torch.nn.Module):
             x = self.forward(text)
             return self.decoder[int(torch.argmax(x, dim=1))]
 
+class CombinedBertCNN(torch.nn.Module):
+    def __init__(self, embedding_size=768, num_classes=13, device='cpu'):
+        super(CombinedBertCNN, self).__init__()
+        self.layers = torch.nn.Sequential(
+            nn.Conv1d(embedding_size, 256, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool1d(kernel_size=2, stride=2),
+            nn.Conv1d(256, 128, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool1d(kernel_size=2, stride=2),
+            nn.Conv1d(128, 64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool1d(kernel_size=2, stride=2),
+            nn.Conv1d(64, 32, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.Flatten(),
+            nn.Linear(1152 , num_classes),
+            ).to(device)
+
+    def forward(self, X):
+        X = self.layers(X)
+        return X
+
 class CombinedModel(nn.Module):
-    def __init__(self, embedding_size=768, out_size=13, decoder: dict = None, device='cpu'):
+    def __init__(self, embedding_size=768, num_classes=13, decoder: dict = None, device='cpu'):
         super(CombinedModel, self).__init__()
         self.decoder = decoder
         resnet50 = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_resnet50', pretrained=True)
         out_features = resnet50.fc.out_features
         self.image_classifier = nn.Sequential(resnet50, nn.Linear(out_features, 128)).to(device)
-        self.text_classifier = BertCNN(num_classes=128).to(device)
-        self.main = nn.Sequential(nn.Linear(256, out_size)).to(device)
+        self.text_classifier = CombinedBertCNN(embedding_size=embedding_size, num_classes=128).to(device)
+        self.main = nn.Sequential(nn.Linear(256, num_classes)).to(device)
 
     def forward(self, image_features, text_features):
         image_features = self.image_classifier(image_features)
@@ -106,19 +128,19 @@ class CombinedModel(nn.Module):
         combined_features = self.main(combined_features)
         return combined_features
 
-    def predict(self, image):
+    def predict(self, image_features, text_feature):
         with torch.no_grad():
-            x = self.forward(image)
+            x = self.forward(image_features, text_feature)
             return x
     
-    def predict_proba(self, image):
+    def predict_proba(self, image_features, text_feature):
         with torch.no_grad():
-            x = self.forward(image)
+            x = self.forward(image_features, text_feature)
             return torch.softmax(x, dim=1)
 
-    def predict_classes(self, image):
+    def predict_classes(self, image_features, text_feature):
         with torch.no_grad():
-            x = self.forward(image)
+            x = self.forward(image_features, text_feature)
             return self.decoder[int(torch.argmax(x, dim=1))]
 
 # Set up image processing and model
@@ -168,7 +190,7 @@ def text_predict(text: str = Form(...)):
     return JSONResponse(status_code=200, content={'prediction': prediction.tolist(), 'probs': probs.tolist(), 'class': classes})
 
 @app.post('/text_image_predict')
-def text_predict(image: UploadFile = File(...), text: str = Form(...)):
+def text__image_predict(image: UploadFile = File(...), text: str = Form(...)):
     img = Image.open(image.file)
     processed_img = image_processor(img)
     text = text
