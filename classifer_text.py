@@ -4,6 +4,13 @@ warnings.filterwarnings('ignore')
 
 
 class TextClassifier(nn.Module):
+    """
+    This classifier applies transfer learning using the bert model
+    for a multi-classification of text data.
+
+    Args:
+        input_size (int): The embedding size to use in the model.
+    """
     def __init__(self,
                 input_size: int = 768):
         super(TextClassifier, self).__init__()
@@ -24,3 +31,4 @@ class TextClassifier(nn.Module):
     def forward(self, inp):
         x = self.main(inp)
         return x
+        

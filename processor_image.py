@@ -1,6 +1,10 @@
 from torchvision import transforms
 
+
 class ImageProcessor:
+    """
+    This converts an image to the required format for the prediction api.
+    """
     def __init__(self):
         self.transform = transforms.Compose([
                 transforms.Resize(256),
@@ -18,7 +22,7 @@ class ImageProcessor:
             transforms.ToTensor(),
             transforms.Lambda(self.repeat_channel),
             transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                    std=[0.229, 0.224, 0.225])
+                                std=[0.229, 0.224, 0.225])
         ])
 
     @staticmethod
@@ -30,7 +34,7 @@ class ImageProcessor:
             image = self.transform_Gray(image)
         else:
             image = self.transform(image)
-        
+
         # Add a dimension to the image
         image = image[None, :, :, :]
         return image
