@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import random
 from PIL import Image
+from PIL.Image import Image as img
 from numpy import array, float32
 from numpy import asarray
 from skimage.filters import try_all_threshold
@@ -20,6 +21,7 @@ from skimage.feature import corner_harris
 from skimage.feature import corner_peaks
 from PIL import ImageFilter
 from tqdm import tqdm
+from typing import Union
 
 
 class ImageCleanse:
@@ -32,14 +34,14 @@ class ImageCleanse:
         upload (str): The directory the images will be uploaded too once 
             prepared
     """
-    def __init__(self, download, upload) -> None:
+    def __init__(self, download: str, upload: str) -> None:
         self.download = os.listdir(download)
         self.upload = upload
         """See help(ImageCleanse) for accurate signature."""
         pass
 
     @staticmethod
-    def crop_image_to_square(image: Image, length: int) -> Image:
+    def crop_image_to_square(image: img, length: int) -> Image:
         """
         Resize an image to a square. Can make an image bigger to make it fit
         or smaller if it doesn't fit. It also crops part of the image.
@@ -56,7 +58,7 @@ class ImageCleanse:
         """
 
         """
-        Resizing strategy : 
+        Resizing strategy :
         1) We resize the smallest side to the desired dimension (e.g. 1080)
         2) We crop the other side so as to make it fit with the same length as the smallest side (e.g. 1080)
         """
@@ -84,7 +86,20 @@ class ImageCleanse:
             return resized_image
 
     @staticmethod
-    def resize_image_and_pad(img: Image, length, pad_mode='RGB'):
+    def resize_image_and_pad(img: img, length: int, pad_mode: str = 'RGB') -> img:
+        """
+        This resizes an image to a sqaure using the same ratio as original
+        image. The remaining pixels are then padded with black pixels.
+
+        Args:
+            img (PIL.Image): The image to be transformed.
+            length (int): The desired length and width of final image.
+            pad_mode (str): Default to RGB so that all images are converted
+                                to this mode.
+        
+        Returns:
+            padding (PIL.Image) : The transformed image.
+        """
         if pad_mode != 'RGB':
             pad_mode = 'RGB'
         padding = Image.new(mode=pad_mode, size=(length, length))
@@ -96,8 +111,19 @@ class ImageCleanse:
         padding.paste(resized_img, ((length - new_img_size[0]) // 2, (length - new_img_size[1]) // 2))
         return padding
 
-    def get_images(self, directory, img_size, pad_mode, crop=False):
+    def get_images(self, directory: str, img_size: int, pad_mode: str, crop: bool = False):
         """
+        This downloads images from a desired directory and transforms
+        according to user selection. the options are size and whther
+        to pad or crop the image.
+
+        Args:
+            directory (str): File directory where images are stored.
+            img_size (int): desired img size for square.
+            pad_mode (str): desired mode for padding
+            crop (bool): Whether to crop (True) the image or pad (False).
+                            False is default value.
+
         """
         img_list = []
         file_names = []
@@ -110,29 +136,53 @@ class ImageCleanse:
             img_list.append(img)
             file_names.append(file)
         return img_list, file_names
-    
+
     @staticmethod
-    def image_to_array(img):
+    def image_to_array(img: img) -> np.ndarray:
         """
+        Converts image file to numpy array.
+
+        Args:
+            img (PIL.Iamge): Image to be transformed
+
+        Returns
+            img (np.ndarray): Transformed image as an array
         """
         img = np.asarray(img)
         return img
-    
+
     @staticmethod
-    def image_to_greyscale(img):
+    def image_to_greyscale(img: img) -> img:
         """
+        Converts image to greyscale image mode.
+
+        Args:
+            img (PIL.Iamge): Image to be transformed
+
+        Returns
+            greyscale (Pil.Image): Transformed image in greyscale
         """
         greyscale = img.convert(mode='L')
         return greyscale
-    
-    def normalise_images(self, img):
+
+    def normalise_images(self, img: img)-> np.ndarray:
+        """
+        Converts image file to numpy array with normalised pixels.
+
+        Args:
+            img (PIL.Iamge): Image to be transformed
+
+        Returns
+            pixels (np.ndarray): Transformed image as an array of normalised
+                                    pixels.
+        """
         img = self.image_to_array(img)
         pixels = img.astype('float32')
         pixels /= 255
         return pixels
 
     @staticmethod
-    def show_image(image: np.ndarray, title="Image", cmap_type="gray", axis=False):
+    def show_image(image: np.ndarray, title: str = "Image", cmap_type: str = "gray", axis: bool =False) -> None:
         """
         A function to display np.ndarrays as images
         """
@@ -143,30 +193,29 @@ class ImageCleanse:
         plt.margins(0, 0)
         plt.show()
     
-    def mark_contours(image):
+    def mark_contours(image: img) -> img:
         """A function to find contours from an image"""
         gray_image = rgb2gray(image)
         # Find optimal threshold
         thresh = threshold_otsu(gray_image)
         # Mask
         binary_image = gray_image > thresh
-
         contours = find_contours(binary_image)
-
         return contours
     
-    def plot_image_contours(image):
+    def plot_image_contours(image: img) -> None:
+        """
+        Shows image contours so user can view.
+        """
         fig, ax = plt.subplots()
-
         ax.imshow(image, cmap=plt.cm.gray)
-
         for contour in mark_contours(image):
             ax.plot(contour[:, 1], contour[:, 0], linewidth=2, color="red")
-
         ax.axis("off")
     
-    def manual_global_threshold(self, img, reversed=True):
+    def manual_global_threshold(self, img: img, reversed: bool = True) -> img:
         """
+        Applies global thresholding to the image.
         Works best with greyscale images.
         """
         normalised = self.normalise_images(img)
@@ -178,23 +227,12 @@ class ImageCleanse:
         binary_image = Image.fromarray(binary_array)
         return binary_image
     
-    def try_all_global_threshold(self, img):
-        """
-        See 
-        """
-        img_array = self.image_to_array(img)
-        fig, ax = try_all_threshold(img_array, figsize=(10, 8), verbose=False)
-        return fig, ax
-    
-    @staticmethod
-    def auto_global_threshold(img, threshold):
-        """
-        See 
-        """
-        threshold_img = threshold(img)
-        return threshold_img
 
-    def manaual_local_threshold(self, img, block_size: int = 5, offset: float32 = 2.000, reversed=True):
+    def manaual_local_threshold(self, img: int, block_size: int = 5, offset: float32 = 2.000, reversed: bool = True)-> img:
+        """
+        Applies local thresholding to the image.
+        Works best with greyscale images.
+        """
         img_array = self.image_to_array(img)
         local_thresh = threshold_local(img_array, block_size= block_size, offset= offset)
         if reversed == True:
@@ -204,19 +242,28 @@ class ImageCleanse:
         local_binary_img = Image.fromarray(local_binary)
         return local_binary_img
 
-    def edge_detection(self, img, sigma=1):
+    def edge_detection(self, img: img, sigma: int = 1) -> img:
+        """
+        Detect edges in the image and outputs new image.
+        """
         img_array = self.image_to_array(img)
         img_edge = canny(img_array, sigma=sigma)
         img_edge = Image.fromarray(img_edge)
         return img_edge
     
-    def denoise_image(self, img, denoise_type=denoise_tv_chambolle, weight=0.3):
+    def denoise_image(self, img: img, denoise_type=denoise_tv_chambolle, weight: float = 0.3) -> img:
+        """
+        Applies denoise to the image and outputs new image.
+        """
         img_array = self.image_to_array(img)
         denoised_img = denoise_type(img_array, channel_axis=True, weight=weight)
         denoised_img = Image.fromarray(np.uint8(denoised_img)).convert('RGB')
         return denoised_img
 
-    def corner_detection(self, img, pixel_distance=50, denoise=True):
+    def corner_detection(self, img: img, pixel_distance: int = 50, denoise: bool = True) -> img:
+        """
+        Applies corner detection to the image and outputs new image.
+        """
         img_array = self.image_to_array(img)
         measured_img = corner_harris(img_array)
         if denoise == True:
@@ -224,14 +271,26 @@ class ImageCleanse:
         corner_coords = corner_peaks(measured_img, min_distance=pixel_distance)
         return corner_coords
     
-    def plot_corner_detection(self, corner_coords, img):
+    def plot_corner_detection(self, corner_coords, img: img) -> None:
         img_array = self.image_to_array(img)
         plt.imshow(img_array, cmap="gray")
         plt.plot(corner_coords[:, 1], corner_coords[:, 0], "+b", markersize=15)
         plt.axis("off")
     
     @staticmethod
-    def save_images(path, folder, img, file_name):
+    def save_images(path: str, folder: str, img: img, file_name: str) -> None:
+        """
+        This saves and image in the desired directory with the desired name.
+        it checks if the directory exisits and if it does not it creates it.
+        The images will be in JPEG format.
+
+        Args:
+            path (str): This is the path used to save images to.
+            folder (str): The folder name that the images will be
+                            saved to in the path.
+            img (PIL.Image): Image to be saved
+            file_name (str): The name the image will be saved with.
+        """
         full_path = os.path.join(path, folder)
         if os.path.exists(full_path) != True:
             os.makedirs(full_path)
@@ -243,7 +302,7 @@ class ImageCleanse:
             print(f'Error saving file of type {img.mode}')
             
     @staticmethod
-    def erode(cycles, img):
+    def erode(cycles: int, img: img) -> img:
         """
         https://realpython.com/image-processing-with-the-python-pillow-library/#image-segmentation-and-superimposition-an-example
         """
@@ -252,12 +311,22 @@ class ImageCleanse:
         return img
 
     @staticmethod
-    def dilate(cycles, img):
+    def dilate(cycles: int, img: img) -> img:
         for _ in range(cycles):
             img = img.filter(ImageFilter.MaxFilter(3))
         return img
     
-    def erode_dilate(self, img, erode_cycles, dilate_cycles, reverse=True):
+    def erode_dilate(self, img: img, erode_cycles: int, dilate_cycles: int, reverse: bool = True) -> img:
+        """
+        This function applies erosion and dilation to the image.
+
+        Args:
+            img (PIL.Iamge): Image to be transformed
+            erode_cycles (int): The number of times to apply erosion
+            dilate_cycles (int): The number of times to apply dilation
+            reverse (bool): Whether to apply erosion or dilation first.
+                                True would erode first
+        """
         img_array = self.image_to_array(img)
         pixels = img_array.astype('float32')
         pixel_mean = pixels.mean()
@@ -274,7 +343,20 @@ class ImageCleanse:
         return img
 
     @staticmethod
-    def create_holdout(img_list, hold_out_size):
+    def create_holdout(img_list: list, hold_out_size: float) -> img:
+        """
+        This function randomly splits the list of images into two sets. 
+
+        Args:
+            img_list (list): list of PIL Images that are holdout will be
+                                created from.
+            hold_out_size (float): the percentage size of the total img_list
+                                    length that you would like to use as a
+                                    holdout.
+        Returns:
+            holdout (list): list of PIL images for the holdout
+            data (list): list of PIL images with the holdout images removed
+        """
         list_size = len(img_list)
         random.shuffle(img_list)
         holdout_split = list_size - round(list_size*hold_out_size)

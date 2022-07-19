@@ -6,6 +6,9 @@ from transformers import BertModel
 
 
 class TextProcessor:
+        """
+    This converts an text to the required format for the prediction api.
+    """
     def __init__(self,
                  max_length: int = 292):
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
