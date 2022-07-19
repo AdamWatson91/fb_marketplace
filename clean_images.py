@@ -29,7 +29,8 @@ class ImageCleanse:
 
     Args:
         download (str): The directory the images are stored
-        upload (str): The directory the images will be uploaded too once prepared
+        upload (str): The directory the images will be uploaded too once 
+            prepared
     """
     def __init__(self, download, upload) -> None:
         self.download = os.listdir(download)
