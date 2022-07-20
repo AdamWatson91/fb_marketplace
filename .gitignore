@@ -144,3 +144,8 @@ images_fb/
 /combined_model.pt:Zone.Identifier
 /combined_decoder.pkl:Zone.Identifier
 /image_decoder.pkl:Zone.Identifier
+
+# ignore docker_folder files
+docker_folder/bert_model.pt
+docker_folder/image_model.pt
+docker_folder/combined_model.pt
